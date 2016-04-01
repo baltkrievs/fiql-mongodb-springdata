@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 import net.jcip.annotations.ThreadSafe;
 
@@ -35,9 +39,9 @@ public class MongoFIQLVisitor extends NoArgRSQLVisitorAdapter<Criteria> {
         put( MongoFIQLOperators.LESS_THAN_OR_EQUAL,    (criteria, arg)-> { return criteria.lte(arg); });
         put( MongoFIQLOperators.LESS_THAN,             (criteria, arg)-> { return criteria.lt(arg);  });
         put( MongoFIQLOperators.NOT_EQUAL,             (criteria, arg)-> { return criteria.ne(arg);  });
-        put( MongoFIQLOperators.IN,                    (criteria, arg)-> { return criteria.in(arg);  });
-        put( MongoFIQLOperators.NOT_IN,                (criteria, arg)-> { return criteria.nin(arg); });
-        put( MongoFIQLOperators.ALL,                   (criteria, arg)-> { return criteria.all(arg); });
+        put( MongoFIQLOperators.IN,                    (criteria, arg)-> {return criteria.in(toList(arg));});
+        put( MongoFIQLOperators.NOT_IN,                (criteria, arg)-> { return criteria.nin(toList(arg)); });
+        put( MongoFIQLOperators.ALL,                   (criteria, arg)-> { return criteria.all(toList(arg)); });
         put( MongoFIQLOperators.LIKE,                  (criteria, arg)-> { return criteria.regex(arg.toString()); });
     }};
 
@@ -47,6 +51,14 @@ public class MongoFIQLVisitor extends NoArgRSQLVisitorAdapter<Criteria> {
 
     public Criteria visit(OrNode node) {
         return joinChildrenNodesInCriteria(node);
+    }
+    
+    private static Collection toList(Object arg) {
+        if (arg instanceof Object[]) {
+            return Arrays.stream((Object[]) arg)
+                    .collect(Collectors.toList());
+        }
+        return Collections.singletonList(arg);
     }
 
     public Criteria visit(ComparisonNode node) {
